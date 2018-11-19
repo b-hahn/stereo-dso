@@ -38,36 +38,53 @@
 #include "IOWrapper/ImageRW.h"
 #include <algorithm>
 
+#if !defined(__SSE3__) && !defined(__SSE2__) && !defined(__SSE1__)
+#include "SSE2NEON.h"
+#endif
+
 namespace dso
 {
+
+
+template<int b, typename T>
+T* allocAligned(int size, std::vector<T*> &rawPtrVec)
+{
+    const int padT = 1 + ((1 << b)/sizeof(T));
+    T* ptr = new T[size + padT];
+    rawPtrVec.push_back(ptr);
+    T* alignedPtr = (T*)(( ((uintptr_t)(ptr+padT)) >> b) << b);
+    return alignedPtr;
+}
+
+
 CoarseTracker::CoarseTracker(int ww, int hh) : lastRef_aff_g2l(0,0)
 {
 	// make coarse tracking templates.
 	for(int lvl=0; lvl<pyrLevelsUsed; lvl++)
 	{
 		int wl = ww>>lvl;
-		int hl = hh>>lvl;
-		idepth[lvl] = new float[wl*hl];
-		weightSums[lvl] = new float[wl*hl];
-		weightSums_bak[lvl] = new float[wl*hl];
+        int hl = hh>>lvl;
 
+        idepth[lvl] = allocAligned<4,float>(wl*hl, ptrToDelete);
+        weightSums[lvl] = allocAligned<4,float>(wl*hl, ptrToDelete);
+        weightSums_bak[lvl] = allocAligned<4,float>(wl*hl, ptrToDelete);
 
-		pc_u[lvl] = new float[wl*hl];
-		pc_v[lvl] = new float[wl*hl];
-		pc_idepth[lvl] = new float[wl*hl];
-		pc_color[lvl] = new float[wl*hl];
+        pc_u[lvl] = allocAligned<4,float>(wl*hl, ptrToDelete);
+        pc_v[lvl] = allocAligned<4,float>(wl*hl, ptrToDelete);
+        pc_idepth[lvl] = allocAligned<4,float>(wl*hl, ptrToDelete);
+        pc_color[lvl] = allocAligned<4,float>(wl*hl, ptrToDelete);
 
 	}
 
 	// warped buffers
-	buf_warped_idepth = new float[ww*hh];
-	buf_warped_u = new float[ww*hh];
-	buf_warped_v = new float[ww*hh];
-	buf_warped_dx = new float[ww*hh];
-	buf_warped_dy = new float[ww*hh];
-	buf_warped_residual = new float[ww*hh];
-	buf_warped_weight = new float[ww*hh];
-	buf_warped_refColor = new float[ww*hh];
+    buf_warped_idepth = allocAligned<4,float>(ww*hh, ptrToDelete);
+    buf_warped_u = allocAligned<4,float>(ww*hh, ptrToDelete);
+    buf_warped_v = allocAligned<4,float>(ww*hh, ptrToDelete);
+    buf_warped_dx = allocAligned<4,float>(ww*hh, ptrToDelete);
+    buf_warped_dy = allocAligned<4,float>(ww*hh, ptrToDelete);
+    buf_warped_residual = allocAligned<4,float>(ww*hh, ptrToDelete);
+    buf_warped_weight = allocAligned<4,float>(ww*hh, ptrToDelete);
+    buf_warped_refColor = allocAligned<4,float>(ww*hh, ptrToDelete);
 
 
 	newFrame = 0;
@@ -78,29 +95,33 @@ CoarseTracker::CoarseTracker(int ww, int hh) : lastRef_aff_g2l(0,0)
 }
 CoarseTracker::~CoarseTracker()
 {
-	for(int lvl=0; lvl<pyrLevelsUsed; lvl++)
-	{
-		delete[] idepth[lvl];
-		delete[] weightSums[lvl];
-		delete[] weightSums_bak[lvl];
+	// jiatan:
+	// for(int lvl=0; lvl<pyrLevelsUsed; lvl++)
+	// {
+	// 	delete[] idepth[lvl];
+	// 	delete[] weightSums[lvl];
+	// 	delete[] weightSums_bak[lvl];
 
-		delete[] pc_u[lvl];
-		delete[] pc_v[lvl] ;
-		delete[] pc_idepth[lvl];
-		delete[] pc_color[lvl];
+	// 	delete[] pc_u[lvl];
+	// 	delete[] pc_v[lvl] ;
+	// 	delete[] pc_idepth[lvl];
+	// 	delete[] pc_color[lvl];
 
 
-	}
+	// }
 
-	delete[]  buf_warped_idepth;
-	delete[]  buf_warped_u;
-	delete[]  buf_warped_v;
-	delete[]  buf_warped_dx;
-	delete[]  buf_warped_dy;
-	delete[]  buf_warped_residual;
-	delete[]  buf_warped_weight;
-	delete[]  buf_warped_refColor;
+	// delete[]  buf_warped_idepth;
+	// delete[]  buf_warped_u;
+	// delete[]  buf_warped_v;
+	// delete[]  buf_warped_dx;
+	// delete[]  buf_warped_dy;
+	// delete[]  buf_warped_residual;
+	// delete[]  buf_warped_weight;
+	// delete[]  buf_warped_refColor;
 
+    for(float* ptr : ptrToDelete)
+        delete[] ptr;
+    ptrToDelete.clear();
 }
 
 void CoarseTracker::makeK(CalibHessian* HCalib)
@@ -361,7 +382,6 @@ void CoarseTracker::makeCoarseDepthL0(std::vector<FrameHessian*> frameHessians, 
 
 				idepth[0][u+w[0]*v] += new_idepth *weight;
 				weightSums[0][u+w[0]*v] += weight;
-
 			}
 		}
 	}
@@ -497,8 +517,10 @@ void CoarseTracker::makeCoarseDepthL0(std::vector<FrameHessian*> frameHessians, 
 	}
 
 }
-    
-void CoarseTracker::calcGSSSE(int lvl, Mat88 &H_out, Vec8 &b_out, SE3 refToNew, AffLight aff_g2l)
+
+
+
+void CoarseTracker::calcGSSSE(int lvl, Mat88 &H_out, Vec8 &b_out, const SE3 &refToNew, AffLight aff_g2l)
 {
 	acc.initialize();
 
@@ -560,7 +582,7 @@ void CoarseTracker::calcGSSSE(int lvl, Mat88 &H_out, Vec8 &b_out, SE3 refToNew, 
 
 
 
-Vec6 CoarseTracker::calcRes(int lvl, SE3 refToNew, AffLight aff_g2l, float cutoffTH)
+Vec6 CoarseTracker::calcRes(int lvl, const SE3 &refToNew, AffLight aff_g2l, float cutoffTH)
 {
 	float E = 0;
 	int numTermsInE = 0;
@@ -657,7 +679,6 @@ Vec6 CoarseTracker::calcRes(int lvl, SE3 refToNew, AffLight aff_g2l, float cutof
 		float refColor = lpc_color[i];
         Vec3f hitColor = getInterpolatedElement33(dINewl, Ku, Kv, wl);
         if(!std::isfinite((float)hitColor[0])) continue;
-
 		float residual = hitColor[0] - (float)(affLL[0] * refColor + affLL[1]);
 		//Huber weight
         float hw = fabs(residual) < setting_huberTH ? 1 : setting_huberTH / fabs(residual);
@@ -783,7 +804,6 @@ bool CoarseTracker::trackNewestCoarse(
 		Mat88 H; Vec8 b;
 		float levelCutoffRepeat=1;
 		Vec6 resOld = calcRes(lvl, refToNew_current, aff_g2l_current, setting_coarseCutoffTH*levelCutoffRepeat);
-
 		while(resOld[5] > 0.6 && levelCutoffRepeat < 50)
 		{
 			levelCutoffRepeat*=2;
@@ -918,14 +938,14 @@ bool CoarseTracker::trackNewestCoarse(
 	aff_g2l_out = aff_g2l_current;
 
 
-	if((setting_affineOptModeA != 0 && (fabsf(aff_g2l_out.a) > 1.2))
-	|| (setting_affineOptModeB != 0 && (fabsf(aff_g2l_out.b) > 200)))
+	if((setting_affineOptModeA != 0 && (fabsf((float)aff_g2l_out.a) > 1.2f))
+	|| (setting_affineOptModeB != 0 && (fabsf((float)aff_g2l_out.b) > 200.f)))
 		return false;
 
 	Vec2f relAff = AffLight::fromToVecExposure(lastRef->ab_exposure, newFrame->ab_exposure, lastRef_aff_g2l, aff_g2l_out).cast<float>();
 
-	if((setting_affineOptModeA == 0 && (fabsf(logf((float)relAff[0])) > 1.5))
-	|| (setting_affineOptModeB == 0 && (fabsf((float)relAff[1]) > 200)))
+	if((setting_affineOptModeA == 0 && (fabsf(logf((float)relAff[0])) > 1.5f))
+	|| (setting_affineOptModeB == 0 && (fabsf((float)relAff[1]) > 200.f)))
 		return false;
 
 

@@ -98,7 +98,7 @@ float setting_margWeightFac = 0.5*0.5;          // factor on hessian when margin
 
 
 /* when to re-track a frame */
-float setting_reTrackThreshold = 1.5; //  ¸Äµ½1 Ã»ÓÐµÃµ½¸ÄÉÆ original is 1.5 (larger = re-track more often)
+float setting_reTrackThreshold = 1.5; //  ï¿½Äµï¿½1 Ã»ï¿½ÐµÃµï¿½ï¿½ï¿½ï¿½ï¿½ original is 1.5 (larger = re-track more often)
 
 
 

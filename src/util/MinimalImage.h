@@ -34,6 +34,7 @@ template<typename T>
 class MinimalImage
 {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	int w;
 	int h;
 	T* data;
@@ -123,21 +124,6 @@ public:
 			at(u+i,v+2) = val;
 		}
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 private:

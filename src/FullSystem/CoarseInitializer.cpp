@@ -39,6 +39,10 @@
 #include "util/nanoflann.h"
 
 
+#if !defined(__SSE3__) && !defined(__SSE2__) && !defined(__SSE1__)
+#include "SSE2NEON.h"
+#endif
+
 namespace dso
 {
 
@@ -332,7 +336,7 @@ void CoarseInitializer::debugPlot(int lvl, std::vector<IOWrap::Output3DWrapper*>
 Vec3f CoarseInitializer::calcResAndGS(
 		int lvl, Mat88f &H_out, Vec8f &b_out,
 		Mat88f &H_out_sc, Vec8f &b_out_sc,
-		SE3 refToNew, AffLight refToNew_aff,
+		const SE3 &refToNew, AffLight refToNew_aff,
 		bool plot)
 {
 	int wl = w[lvl], hl = h[lvl];
@@ -379,6 +383,17 @@ Vec3f CoarseInitializer::calcResAndGS(
 		EIGEN_ALIGN16 VecNRf dp7;
 		EIGEN_ALIGN16 VecNRf dd;
 		EIGEN_ALIGN16 VecNRf r;
+        // NikDemmel:
+		// VecNRf dp0;
+        // VecNRf dp1;
+        // VecNRf dp2;
+        // VecNRf dp3;
+        // VecNRf dp4;
+        // VecNRf dp5;
+        // VecNRf dp6;
+        // VecNRf dp7;
+        // VecNRf dd;
+        // VecNRf r;
 		JbBuffer_new[i].setZero();
 
 		// sum over all residuals.
@@ -954,7 +969,6 @@ void CoarseInitializer::setFirst(	CalibHessian* HCalib, FrameHessian* newFrameHe
 	bool* statusMapB = new bool[w[0]*h[0]];
 
 	float densities[] = {0.03,0.05,0.15,0.5,1};
-
 	for(int lvl=0; lvl<pyrLevelsUsed; lvl++)
 	{
 		sel.currentPotential = 3;
@@ -975,7 +989,7 @@ void CoarseInitializer::setFirst(	CalibHessian* HCalib, FrameHessian* newFrameHe
 		for(int x=patternPadding+1;x<wl-patternPadding-2;x++)
 		{
 			//if(x==2) printf("y=%d!\n",y);
-			if(lvl!=0 && statusMapB[x+y*wl])
+			if((lvl!=0 && statusMapB[x+y*wl]) || (lvl==0 && statusMap[x+y*wl] != 0))
 			{
 				//assert(patternNum==9);
 				pl[nl].u = x+0.1;

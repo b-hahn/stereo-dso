@@ -476,19 +476,32 @@ void PangolinDSOViewer::drawConstraints()
 }
 
 
-void PangolinDSOViewer::publishGraph(const std::map<long,Eigen::Vector2i> &connectivity)
+
+
+
+
+void PangolinDSOViewer::publishGraph(const std::map<uint64_t, Eigen::Vector2i, std::less<uint64_t>, Eigen::aligned_allocator<std::pair<const uint64_t, Eigen::Vector2i>>> &connectivity)
 {
     if(!setting_render_display3D) return;
     if(disableAllDisplay) return;
 
 	model3DMutex.lock();
+	// jiatian:
 	connections.resize(connectivity.size()/2);
+	// int runningID=0;
+	// int totalActFwd=0, totalActBwd=0, totalMargFwd=0, totalMargBwd=0;
+	// for(std::pair<long,Eigen::Vector2i> p : connectivity)
+	// {
+	// 	int host = (int)(p.first >> 32);
+	// 	int target = (int)(p.first & (long)0xFFFFFFFF);
+	// demmel:
+    // connections.resize(connectivity.size());
 	int runningID=0;
 	int totalActFwd=0, totalActBwd=0, totalMargFwd=0, totalMargBwd=0;
-	for(std::pair<long,Eigen::Vector2i> p : connectivity)
+    for(std::pair<uint64_t,Eigen::Vector2i> p : connectivity)
 	{
 		int host = (int)(p.first >> 32);
-		int target = (int)(p.first & (long)0xFFFFFFFF);
+        int target = (int)(p.first & (uint64_t)0xFFFFFFFF);
 
 		assert(host >= 0 && target >= 0);
 		if(host == target)
@@ -506,7 +519,7 @@ void PangolinDSOViewer::publishGraph(const std::map<long,Eigen::Vector2i> &conne
 		totalActFwd += p.second[0];
 		totalMargFwd += p.second[1];
 
-		long inverseKey = (((long)target) << 32) + ((long)host);
+        uint64_t inverseKey = (((uint64_t)target) << 32) + ((uint64_t)host);
 		Eigen::Vector2i st = connectivity.at(inverseKey);
 		connections[runningID].bwdAct = st[0];
 		connections[runningID].bwdMarg = st[1];
@@ -548,8 +561,6 @@ void PangolinDSOViewer::publishCamPose(FrameShell* frame,
 		CalibHessian* HCalib)
 {
     if(!setting_render_display3D) return;
-    if(disableAllDisplay) return;
-
 	boost::unique_lock<boost::mutex> lk(model3DMutex);
 	struct timeval time_now;
 	gettimeofday(&time_now, NULL);
@@ -610,6 +621,7 @@ bool PangolinDSOViewer::needPushDepthImage()
 {
     return setting_render_displayDepth;
 }
+
 
 void PangolinDSOViewer::pushDepthImage(MinimalImageB3* image)
 {

@@ -152,6 +152,7 @@ void settingsDefault(int preset)
 	printf("==============================================\n");
 }
 
+
 void parseArgument(char* arg)
 {
 	int option;
@@ -370,17 +371,36 @@ int main( int argc, char** argv )
 		printf("ERROR: dont't have photometric calibation. Need to use commandline options mode=1 or mode=2 ");
 		exit(1);
 	}
-	
+
+
+
+
 	int lstart=start;
 	int lend = end;
-	
-	// build system
+	int linc = 1;
+	if(reverse)
+	{
+		printf("REVERSE!!!!");
+		lstart=end-1;
+		if(lstart >= reader->getNumImages())
+			lstart = reader->getNumImages()-1;
+		lend = start;
+		linc = -1;
+	}
+
+
+
 	FullSystem* fullSystem = new FullSystem();
 	fullSystem->setGammaFunction(reader->getPhotometricGamma());
 	fullSystem->linearizeOperation = (playbackSpeed==0);
-	
-	
-	IOWrap::PangolinDSOViewer* viewer = 0;
+
+
+
+
+
+
+
+    IOWrap::PangolinDSOViewer* viewer = 0;
 	if(!disableAllDisplay)
     {
         viewer = new IOWrap::PangolinDSOViewer(wG[0],hG[0], false);
@@ -548,15 +568,13 @@ int main( int argc, char** argv )
             }
 
         }
-
-
         fullSystem->blockUntilMappingIsFinished();
         clock_t ended = clock();
         struct timeval tv_end;
         gettimeofday(&tv_end, NULL);
 
 
-        fullSystem->printResult("/home/jiatianwu/project/sdso/result.txt");
+        fullSystem->printResult("result.txt");
 
 
         int numFramesProcessed = abs(idsToPlay[0]-idsToPlay.back());

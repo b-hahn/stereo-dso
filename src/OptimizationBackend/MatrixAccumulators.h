@@ -25,6 +25,9 @@
 #pragma once
 #include "util/NumType.h"
 
+#if !defined(__SSE3__) && !defined(__SSE2__) && !defined(__SSE1__)
+#include "SSE2NEON.h"
+#endif
 
 namespace dso
 {
@@ -56,7 +59,7 @@ public:
   }
 
 
-  inline void update(Eigen::Matrix<float,i,1> L, Eigen::Matrix<float,j,1> R, float w)
+  inline void update(const Eigen::Matrix<float,i,1> &L, const Eigen::Matrix<float,j,1> &R, float w)
   {
 	  A += w*L*R.transpose();
 	  numIn1++;
@@ -195,14 +198,14 @@ public:
   }
 
 
-  inline void update(Eigen::Matrix<float,i,1> L, float w)
+  inline void update(const Eigen::Matrix<float,i,1> &L, float w)
   {
 	  A += w*L;
 	  numIn1++;
 	  shiftUp(false);
   }
 
-  inline void updateNoWeight(Eigen::Matrix<float,i,1> L)
+  inline void updateNoWeight(const Eigen::Matrix<float,i,1> &L)
   {
 	  A += L;
 	  numIn1++;

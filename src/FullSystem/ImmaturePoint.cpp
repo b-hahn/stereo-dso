@@ -86,6 +86,8 @@ ImmaturePoint::ImmaturePoint(float u_, float v_, FrameHessian* host_, CalibHessi
 
 }
 
+	// idepth_GT=0;  // demmel: not used?!
+
 ImmaturePoint::~ImmaturePoint()
 {
 }
@@ -397,9 +399,10 @@ ImmaturePointStatus ImmaturePoint::traceStereo(FrameHessian* frame, Mat33f K, bo
  * * UPDATED -> point has been updated.
  * * SKIP -> point has not been updated.
  */
-ImmaturePointStatus ImmaturePoint::traceOn(FrameHessian* frame, Mat33f hostToFrame_KRKi, Vec3f hostToFrame_Kt, Vec2f hostToFrame_affine, CalibHessian* HCalib, bool debugPrint)
+ImmaturePointStatus ImmaturePoint::traceOn(FrameHessian* frame,const Mat33f &hostToFrame_KRKi, const Vec3f &hostToFrame_Kt, const Vec2f& hostToFrame_affine, CalibHessian* HCalib, bool debugPrint)
 {
 	if(lastTraceStatus == ImmaturePointStatus::IPS_OOB) return lastTraceStatus;
+
 
 	debugPrint = false;//rand()%100==0;
 	float maxPixSearch = (wG[0]+hG[0])*setting_maxPixSearch;
@@ -742,7 +745,6 @@ ImmaturePointStatus ImmaturePoint::traceOn(FrameHessian* frame, Mat33f hostToFra
 	lastTracePixelInterval=2*errorInPixel;
 	lastTraceUV = Vec2f(bestU, bestV);
 	return lastTraceStatus = ImmaturePointStatus::IPS_GOOD;
-
 }
 
 

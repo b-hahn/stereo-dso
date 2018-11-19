@@ -147,7 +147,8 @@ private:
 			int lvl,
 			Mat88f &H_out, Vec8f &b_out,
 			Mat88f &H_out_sc, Vec8f &b_out_sc,
-			SE3 refToNew, AffLight refToNew_aff,
+			// jiatian: SE3 refToNew, AffLight refToNew_aff,
+			const SE3 &refToNew, AffLight refToNew_aff,  // demmel
 			bool plot);
 	Vec3f calcEC(int lvl); // returns OLD NERGY, NEW ENERGY, NUM TERMS.
 	void optReg(int lvl);

@@ -83,11 +83,13 @@ public:
 	~ImmaturePoint();
 
     ImmaturePointStatus traceStereo(FrameHessian* frame, Mat33f K, bool mode_right);
-	ImmaturePointStatus traceOn(FrameHessian* frame, Mat33f hostToFrame_KRKi, Vec3f hostToFrame_Kt, Vec2f hostToFrame_affine, CalibHessian* HCalib, bool debugPrint=false);
+	ImmaturePointStatus traceOn(FrameHessian* frame, const Mat33f &hostToFrame_KRKi, const Vec3f &hostToFrame_Kt, const Vec2f &hostToFrame_affine, CalibHessian* HCalib, bool debugPrint=false);
 
 	ImmaturePointStatus lastTraceStatus;
 	Vec2f lastTraceUV;
 	float lastTracePixelInterval;
+
+	float idepth_GT;
 
 	double linearizeResidual(
 			CalibHessian *  HCalib, const float outlierTHSlack,

@@ -86,6 +86,9 @@ public:
 
 	EIGEN_ALIGN16 VecNRf res_toZeroF;
 	EIGEN_ALIGN16 Vec8f JpJdF;
+	// demmel:
+	// VecNRf res_toZeroF;
+	// Vec8f JpJdF;
 
 
 	// status.

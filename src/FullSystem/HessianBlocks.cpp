@@ -71,7 +71,7 @@ void PointHessian::release()
 }
 
 
-void FrameHessian::setStateZero(Vec10 state_zero)
+void FrameHessian::setStateZero(const Vec10 &state_zero)
 {
 	assert(state_zero.head<6>().squaredNorm() < 1e-20);
 
@@ -112,10 +112,10 @@ void FrameHessian::release()
 {
 	// DELETE POINT
 	// DELETE RESIDUAL
-	  for(unsigned int i=0;i<pointHessians.size();i++) delete pointHessians[i];
-	  for(unsigned int i=0;i<pointHessiansMarginalized.size();i++) delete pointHessiansMarginalized[i];
-	  for(unsigned int i=0;i<pointHessiansOut.size();i++) delete pointHessiansOut[i];
-	  for(unsigned int i=0;i<immaturePoints.size();i++) delete immaturePoints[i];
+	for(unsigned int i=0;i<pointHessians.size();i++) delete pointHessians[i];
+	for(unsigned int i=0;i<pointHessiansMarginalized.size();i++) delete pointHessiansMarginalized[i];
+	for(unsigned int i=0;i<pointHessiansOut.size();i++) delete pointHessiansOut[i];
+	for(unsigned int i=0;i<immaturePoints.size();i++) delete immaturePoints[i];
 
 
 	pointHessians.clear();

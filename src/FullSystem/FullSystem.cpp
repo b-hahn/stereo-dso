@@ -211,11 +211,10 @@ FullSystem::~FullSystem()
 	delete ef;
 }
 
-void FullSystem::setOriginalCalib(VecXf originalCalib, int originalW, int originalH)
+void FullSystem::setOriginalCalib(const VecXf &originalCalib, int originalW, int originalH)
 {
 
 }
-
 
 void FullSystem::setGammaFunction(float* BInv)
 {
@@ -369,7 +368,6 @@ Vec4 FullSystem::trackNewCoarse(FrameHessian* fh, FrameHessian* fh_right)
 			lastF_2_slast = slast->camToWorld.inverse() * lastF->shell->camToWorld;
 			aff_last_2_l = slast->aff_g2l;
 		}
-
 		SE3 fh_2_slast = slast_2_sprelast;// assumed to be the same as fh_2_slast.
 
 
@@ -394,7 +392,7 @@ Vec4 FullSystem::trackNewCoarse(FrameHessian* fh, FrameHessian* fh_right)
 		// just try a TON of different initializations (all rotations). In the end,
 		// if they don't work they will only be tried on the coarsest level, which is super fast anyway.
 		// also, if tracking rails here we loose, so we really, really want to avoid that.
-		for(float rotDelta=0.02; rotDelta < 0.02; rotDelta++)
+		for(float rotDelta=0.02; rotDelta < 0.02; rotDelta++)  // demmel: set to 0.05
 		{
 			lastF_2_fh_tries.push_back(fh_2_slast.inverse() * lastF_2_slast * SE3(Sophus::Quaterniond(1,rotDelta,0,0), Vec3(0,0,0)));			// assume constant motion.
 			lastF_2_fh_tries.push_back(fh_2_slast.inverse() * lastF_2_slast * SE3(Sophus::Quaterniond(1,0,rotDelta,0), Vec3(0,0,0)));			// assume constant motion.
@@ -519,7 +517,7 @@ Vec4 FullSystem::trackNewCoarse(FrameHessian* fh, FrameHessian* fh_right)
 	fh->shell->camToWorld = fh->shell->trackingRef->camToWorld * fh->shell->camToTrackingRef;
 
 
-    Eigen::Matrix<double,3,1> last_T = fh->shell->camToWorld.translation().transpose();
+    Eigen::Matrix<double,3,1> last_T = fh->shell->camToWorld.translation().transpose();  // TODO: might have to add aligned allocator
     std::cout<<"x:"<<last_T(0,0)<<"y:"<<last_T(1,0)<<"z:"<<last_T(2,0)<<std::endl;
 
 	if(coarseTracker->firstCoarseRMSE < 0)
@@ -919,7 +917,7 @@ void FullSystem::activatePointsMT()
 			else
 			{
 				delete ph;
-				host->immaturePoints[i]=0; //删除点的操作
+				host->immaturePoints[i]=0;
 			}
 		}
 	}
@@ -1117,6 +1115,22 @@ void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* imag
 		{
 			coarseInitializer->setFirstStereo(&Hcalib, fh,fh_right);
 			initialized=true;
+
+		// demmel:
+		// 	coarseInitializer->setFirst(&Hcalib, fh);
+		// }
+		// else if(coarseInitializer->trackFrame(fh, outputWrapper))	// if SNAPPED
+		// {
+
+		// 	initializeFromInitializer(fh);
+		// 	lock.unlock();
+		// 	deliverTrackedFrame(fh, true);
+		// }
+		// else
+		// {
+		// 	// if still initializing
+		// 	fh->shell->poseValid = false;
+		// 	delete fh;
 		}
 		return;
 	}
@@ -1140,7 +1154,6 @@ void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* imag
         }
 
 		bool needToMakeKF = false;
-
 		if(setting_keyframesPerSecond > 0)
 		{
 			needToMakeKF = allFrameHistory.size()== 1 ||
@@ -1332,7 +1345,6 @@ void FullSystem::makeKeyFrame( FrameHessian* fh, FrameHessian* fh_right)
 	// =========================== add New Frame to Hessian Struct. =========================
 	fh->idx = frameHessians.size();
 	frameHessians.push_back(fh);
-
 	fh->frameID = allKeyFramesHistory.size();
 	allKeyFramesHistory.push_back(fh->shell);
 	ef->insertFrame(fh, &Hcalib);
@@ -1484,6 +1496,9 @@ void FullSystem::initializeFromInitializer(FrameHessian* newFrame)
 
     FrameHessian* firstFrameRight = coarseInitializer->firstRightFrame;
     frameHessiansRight.push_back(firstFrameRight);
+	// demmel:
+	//int numPointsTotal = makePixelStatus(firstFrame->dI, selectionMap, wG[0], hG[0], setting_desiredDensity);
+	//int numPointsTotal = pixelSelector->makeMaps(firstFrame->dIp, selectionMap,setting_desiredDensity);
 
 	firstFrame->pointHessians.reserve(wG[0]*hG[0]*0.2f);
 	firstFrame->pointHessiansMarginalized.reserve(wG[0]*hG[0]*0.2f);
@@ -1496,6 +1511,7 @@ void FullSystem::initializeFromInitializer(FrameHessian* newFrame)
 		sumID += coarseInitializer->points[0][i].iR;
 		numID++;
 	}
+	float rescaleFactor = 1 / (sumID / numID);
 
 	// randomly sub-select the points I need.
 	float keepPercentage = setting_desiredPointDensity / coarseInitializer->numPoints[0];
@@ -1532,6 +1548,9 @@ void FullSystem::initializeFromInitializer(FrameHessian* newFrame)
 
         }
 
+
+
+		pt->idepth_max=pt->idepth_min=1;
 		PointHessian* ph = new PointHessian(pt, &Hcalib);
 		delete pt;
 		if(!std::isfinite(ph->energyTH)) {delete ph; continue;}
@@ -1546,7 +1565,11 @@ void FullSystem::initializeFromInitializer(FrameHessian* newFrame)
 		ef->insertPoint(ph);
 	}
 
+
+
 	SE3 firstToNew = coarseInitializer->thisToNext;
+	firstToNew.translation() /= rescaleFactor;
+
 
 	// really no lock required, as we are initializing.
 	{
@@ -1587,7 +1610,6 @@ void FullSystem::makeNewTraces(FrameHessian* newFrame, FrameHessian* newFrameRig
 		if(selectionMap[i]==0) continue;
 
 		ImmaturePoint* impt = new ImmaturePoint(x,y,newFrame, selectionMap[i], &Hcalib);
-
 		if(!std::isfinite(impt->energyTH)) delete impt;
 		else newFrame->immaturePoints.push_back(impt);
 

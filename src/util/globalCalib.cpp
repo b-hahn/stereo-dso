@@ -42,9 +42,9 @@ namespace dso
 	float wM3G;
 	float hM3G;
 
-    float baseline;
+	float baseline;
 
-	void setGlobalCalib(int w, int h, Eigen::Matrix3f K)
+	void setGlobalCalib(int w, int h,const Eigen::Matrix3f &K)
 	{
 		int wlvl=w;
 		int hlvl=h;
