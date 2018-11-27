@@ -220,6 +220,7 @@ public:
 	void setBaseline()
 	{
 		baseline = undistort->getBl();
+		printf("baseline: %f\n", baseline);
 	}
 
 	int getNumImages()

@@ -136,6 +136,7 @@ ImmaturePointStatus ImmaturePoint::traceStereo(FrameHessian* frame, Mat33f K, bo
 	Vec3f ptpMax;
 	float maxPixSearch = (wG[0]+hG[0])*setting_maxPixSearch;
 
+	// printf("idepth_max_stereo: %f\n", idepth_max_stereo);
 	if(std::isfinite(idepth_max_stereo))
 	{
 		ptpMax = pr + Kt*idepth_max_stereo;
@@ -183,12 +184,25 @@ ImmaturePointStatus ImmaturePoint::traceStereo(FrameHessian* frame, Mat33f K, bo
 		vMax = vMin + dist*dy*d;
 
 		// may still be out!
+		// printf("K:\t(%f, %f, %f)\n"
+		// 		"\t(%f, %f, %f)\n"
+		// 		"\t(%f, %f, %f)\n", K(0,0), K(0,1), K(0,2), K(1,0), K(1,1), K(1,2),K(2,0), K(2,1), K(2,2));
+		// printf("bl: (%f, %f, %f)\n", bl[0], bl[1], bl[2]);
+		// printf("pr: (%f, %f, %f)\n", pr[0], pr[1], pr[2]);
+		// printf("Kt: (%f, %f, %f)\n", Kt[0], Kt[1], Kt[2]);
+		// printf("idepth_min_stereo: %f, idepth_max_stereo: %f\n", idepth_min_stereo, idepth_max_stereo);
+		// printf("ptpMin: (%f, %f, %f)\n", ptpMin[0], ptpMin[1], ptpMin[2]);
+		// printf("ptpMax: (%f, %f, %f)\n", ptpMax[0], ptpMax[1], ptpMax[2]);
+		// printf("uMax: %f, uMin: %f, vMax  %f, vMin: %f, wG[0]-5:  %d, hG[0]-5:  %d, dx: %f, dy: %f, d: %f, dist: %f\n",uMax, uMin, vMax, vMin, wG[0]-5, hG[0]-5, dx, dy, d, dist);
 		if(!(uMax > 4 && vMax > 4 && uMax < wG[0]-5 && vMax < hG[0]-5))
 		{
 			lastTraceUV = Vec2f(-1,-1);
 			lastTracePixelInterval=0;
+			printf("returning IPS_OOB 1\n");
+			// exit(0);
 			return lastTraceStatus = ImmaturePointStatus::IPS_OOB;
 		}
+			// exit(0);
 		assert(dist>0);
 	}
 
@@ -197,6 +211,7 @@ ImmaturePointStatus ImmaturePoint::traceStereo(FrameHessian* frame, Mat33f K, bo
 	{
 		lastTraceUV = Vec2f(-1, -1);
 		lastTracePixelInterval = 0;
+		// printf("returning IPS_OOB 2\n");
 		return lastTraceStatus = ImmaturePointStatus::IPS_OOB;
 	}
 
@@ -216,6 +231,7 @@ ImmaturePointStatus ImmaturePoint::traceStereo(FrameHessian* frame, Mat33f K, bo
 //			return lastTraceStatus_Stereo = ImmaturePointStatus::IPS_BADCONDITION;
 //            lastTraceUV = Vec2f(u, v);
 //            lastTracePixelInterval = dist;
+		// printf("returning IPS_BADCONDITION 1\n");
 		return lastTraceStatus = ImmaturePointStatus ::IPS_BADCONDITION;
 	}
 
@@ -248,6 +264,7 @@ ImmaturePointStatus ImmaturePoint::traceStereo(FrameHessian* frame, Mat33f K, bo
 	{
 		lastTraceUV = Vec2f(-1,-1);
 		lastTracePixelInterval=0;
+		// printf("returning IPS_OOB 3\n");
 		return lastTraceStatus = ImmaturePointStatus::IPS_OOB;
 	}
 
@@ -358,10 +375,14 @@ ImmaturePointStatus ImmaturePoint::traceStereo(FrameHessian* frame, Mat33f K, bo
 
 		lastTracePixelInterval=0;
 		lastTraceUV = Vec2f(-1,-1);
-		if(lastTraceStatus == ImmaturePointStatus::IPS_OUTLIER)
+		if(lastTraceStatus == ImmaturePointStatus::IPS_OUTLIER) {
+			// printf("returning IPS_OOB 4\n");
 			return lastTraceStatus = ImmaturePointStatus::IPS_OOB;
-		else
+		}
+		else {
+			// printf("returning IPS_OUTLIER 1\n");
 			return lastTraceStatus = ImmaturePointStatus::IPS_OUTLIER;
+		}
 	}
 
 	// ============== set new interval ===================
@@ -383,12 +404,14 @@ ImmaturePointStatus ImmaturePoint::traceStereo(FrameHessian* frame, Mat33f K, bo
 	{
 		lastTracePixelInterval=0;
 		lastTraceUV = Vec2f(-1,-1);
+		// printf("returning IPS_OUTLIER 2\n");
 		return lastTraceStatus = ImmaturePointStatus::IPS_OUTLIER;
 	}
 
 	lastTracePixelInterval=2*errorInPixel;
 	lastTraceUV = Vec2f(bestU, bestV);
 	idepth_stereo = (u_stereo - bestU)/bf;
+	// printf("returning IPS_GOOD!\n");
 	return lastTraceStatus = ImmaturePointStatus::IPS_GOOD;
 
 }

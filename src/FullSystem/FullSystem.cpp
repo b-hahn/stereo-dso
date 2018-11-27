@@ -392,7 +392,7 @@ Vec4 FullSystem::trackNewCoarse(FrameHessian* fh, FrameHessian* fh_right)
 		// just try a TON of different initializations (all rotations). In the end,
 		// if they don't work they will only be tried on the coarsest level, which is super fast anyway.
 		// also, if tracking rails here we loose, so we really, really want to avoid that.
-		for(float rotDelta=0.02; rotDelta < 0.02; rotDelta++)  // demmel: set to 0.05
+		for(float rotDelta=0.02; rotDelta < 0.05; rotDelta++)  // demmel: set to 0.05
 		{
 			lastF_2_fh_tries.push_back(fh_2_slast.inverse() * lastF_2_slast * SE3(Sophus::Quaterniond(1,rotDelta,0,0), Vec3(0,0,0)));			// assume constant motion.
 			lastF_2_fh_tries.push_back(fh_2_slast.inverse() * lastF_2_slast * SE3(Sophus::Quaterniond(1,0,rotDelta,0), Vec3(0,0,0)));			// assume constant motion.
@@ -1108,6 +1108,7 @@ void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* imag
 	fh_right->ab_exposure = image_right->exposure_time;
 	fh_right->makeImages(image_right->image,&Hcalib);
 	
+	printf("!initialized: %d, coarseInitializer->frameID<0: %d,\n", !initialized, coarseInitializer->frameID<0);
 	if(!initialized)
 	{
 		// use initializer!
@@ -1539,24 +1540,28 @@ void FullSystem::initializeFromInitializer(FrameHessian* newFrame)
         pt->idepth_max = pt->idepth_max_stereo;
         idepthStereo = pt->idepth_stereo;
 
-
-		if(!std::isfinite(pt->energyTH) || !std::isfinite(pt->idepth_min) || !std::isfinite(pt->idepth_max)
-				|| pt->idepth_min < 0 || pt->idepth_max < 0)
-        {
-            delete pt;
-            continue;
-
+        // printf(
+        //     "!std::isfinite(pt->energyTH): %d,!std::isfinite(pt->idepth_min): %d,!std::isfinite(pt->idepth_max): %d, "
+        //     "pt->idepth_min < 0: %d,pt->idepth_max < 0: %d\n", !std::isfinite(pt->energyTH), !std::isfinite(pt->idepth_min), !std::isfinite(pt->idepth_max),
+        //     pt->idepth_min < 0, pt->idepth_max < 0);
+        if(!std::isfinite(pt->energyTH) || !std::isfinite(pt->idepth_min) || !std::isfinite(pt->idepth_max)
+					|| pt->idepth_min < 0 || pt->idepth_max < 0)
+		{
+          delete pt;
+          continue;
         }
 
+        pt->idepth_max = pt->idepth_min = 1;
+        PointHessian* ph = new PointHessian(pt, &Hcalib);
+        delete pt;
+        if (!std::isfinite(ph->energyTH)) {
+          delete ph;
+          continue;}
 
-
-		pt->idepth_max=pt->idepth_min=1;
-		PointHessian* ph = new PointHessian(pt, &Hcalib);
-		delete pt;
-		if(!std::isfinite(ph->energyTH)) {delete ph; continue;}
-
-        ph->setIdepthScaled(idepthStereo);
-        ph->setIdepthZero(idepthStereo);
+        ph->setIdepthScaled(point->iR*rescaleFactor);  // demmel
+		ph->setIdepthZero(ph->idepth);  // demmel
+		// ph->setIdepthScaled(idepthStereo);  // jiatian
+        // ph->setIdepthZero(idepthStereo);  // jiatian
 		ph->hasDepthPrior=true;
 		ph->setPointStatus(PointHessian::ACTIVE);
 

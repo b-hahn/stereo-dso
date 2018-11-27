@@ -497,6 +497,19 @@ int main( int argc, char** argv )
 			  img_right = reader_right->getImage(i);
 			}
 
+			int w = img_left->w;
+			int h = img_left->h;
+			// MinimalImageB3* internalVideoImg = new MinimalImageB3(w,h);
+			// // MinimalImageB3* internalVideoImg_Right = new MinimalImageB3(w,h);
+			// for(int i=0;i<w*h;i++){
+			// 	internalVideoImg->data[i][0] =
+			// 	internalVideoImg->data[i][1] =
+			// 	internalVideoImg->data[i][2] =
+			// 		img_left->image[i]*0.8 > 255.0f ? 255.0 : img_left->image[i]*0.8;
+			// }
+			// IOWrap::displayImage("left cam", internalVideoImg);
+			// IOWrap::waitKey(5000);
+
             bool skipFrame=false;
             if(playbackSpeed!=0)
             {

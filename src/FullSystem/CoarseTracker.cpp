@@ -337,6 +337,7 @@ void CoarseTracker::makeCoarseDepthL0(std::vector<FrameHessian*> frameHessians, 
                 pt_track->v_stereo = pt_track->v;
 
 				// free to debug
+				// printf("MADE IT HERE!!\n");
                 pt_track->idepth_min_stereo = r->centerProjectedTo[2] * 0.1f;
                 pt_track->idepth_max_stereo = r->centerProjectedTo[2] * 1.9f;
 
