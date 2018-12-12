@@ -381,14 +381,13 @@ ImageAndExposure* Undistort::undistort(const MinimalImage<T>* image_raw, float e
 		printf("Undistort::undistort: wrong image size (%d %d instead of %d %d) \n", image_raw->w, image_raw->h, wOrg, hOrg);
 		exit(1);
 	}
-	printf("Undistort::undistort: image raw size: (%d, %d) w/h: (%d, %d) wOrg/hOrg: (%d, %d)\n", image_raw->w,
-               image_raw->h, w, h, wOrg, hOrg);
+	// printf("Undistort::undistort: image raw size: (%d, %d) w/h: (%d, %d) wOrg/hOrg: (%d, %d)\n", image_raw->w,
+    //            image_raw->h, w, h, wOrg, hOrg);
 
         photometricUndist->processFrame<T>(image_raw->data, exposure, factor);
 	ImageAndExposure* result = new ImageAndExposure(w, h, timestamp);
 	photometricUndist->output->copyMetaTo(*result);
-	printf("passthrough: %d\n", passthrough);
-	if (!passthrough/* false */)
+	if (!passthrough)
 	{
 		float* out_data = result->image;
 		float* in_data = photometricUndist->output->image;

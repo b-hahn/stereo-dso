@@ -1108,7 +1108,6 @@ void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* imag
 	fh_right->ab_exposure = image_right->exposure_time;
 	fh_right->makeImages(image_right->image,&Hcalib);
 	
-	printf("!initialized: %d, coarseInitializer->frameID<0: %d,\n", !initialized, coarseInitializer->frameID<0);
 	if(!initialized)
 	{
 		// use initializer!
@@ -1169,7 +1168,7 @@ void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* imag
                           setting_kfGlobalWeight*setting_maxShiftWeightR *  sqrtf((double)tres[2]) / (wG[0]+hG[0]) +
                           setting_kfGlobalWeight*setting_maxShiftWeightRT * sqrtf((double)tres[3]) / (wG[0]+hG[0]) +
                           setting_kfGlobalWeight*setting_maxAffineWeight * fabs(logf((float)refToFh[0]));
-            printf(" delta is %f \n", delta);
+            // printf(" delta is %f \n", delta);
             // BRIGHTNESS CHECK
 			needToMakeKF = allFrameHistory.size()== 1 || delta > 1 || 2*coarseTracker->firstCoarseRMSE < tres[0];
 
@@ -1512,7 +1511,8 @@ void FullSystem::initializeFromInitializer(FrameHessian* newFrame)
 		sumID += coarseInitializer->points[0][i].iR;
 		numID++;
 	}
-	float rescaleFactor = 1 / (sumID / numID);
+	// float rescaleFactor = 1 / (sumID / numID);
+	// std::cout << "rescaleFactor: " << rescaleFactor << std::endl;
 
 	// randomly sub-select the points I need.
 	float keepPercentage = setting_desiredPointDensity / coarseInitializer->numPoints[0];
@@ -1558,10 +1558,10 @@ void FullSystem::initializeFromInitializer(FrameHessian* newFrame)
           delete ph;
           continue;}
 
-        ph->setIdepthScaled(point->iR*rescaleFactor);  // demmel
-		ph->setIdepthZero(ph->idepth);  // demmel
-		// ph->setIdepthScaled(idepthStereo);  // jiatian
-        // ph->setIdepthZero(idepthStereo);  // jiatian
+        // ph->setIdepthScaled(point->iR*rescaleFactor);  // demmel
+		// ph->setIdepthZero(ph->idepth);  // demmel
+		ph->setIdepthScaled(idepthStereo);  // jiatian
+        ph->setIdepthZero(idepthStereo);  // jiatian
 		ph->hasDepthPrior=true;
 		ph->setPointStatus(PointHessian::ACTIVE);
 
@@ -1573,7 +1573,7 @@ void FullSystem::initializeFromInitializer(FrameHessian* newFrame)
 
 
 	SE3 firstToNew = coarseInitializer->thisToNext;
-	firstToNew.translation() /= rescaleFactor;
+	// firstToNew.translation() /= rescaleFactor;  //demmel
 
 
 	// really no lock required, as we are initializing.

@@ -58,18 +58,18 @@ public:
 
         virtual void publishGraph(const std::map<uint64_t, Eigen::Vector2i, std::less<uint64_t>, Eigen::aligned_allocator<std::pair<const uint64_t, Eigen::Vector2i>>> &connectivity) override
         {
-            printf("OUT: got graph with %d edges\n", (int)connectivity.size());
+            // printf("OUT: got graph with %d edges\n", (int)connectivity.size());
 
-            int maxWrite = 5;
+            // int maxWrite = 5;
 
-            for(const std::pair<uint64_t,Eigen::Vector2i> &p : connectivity)
-            {
-                int idHost = p.first>>32;
-                int idTarget = p.first & ((uint64_t)0xFFFFFFFF);
-                printf("OUT: Example Edge %d -> %d has %d active and %d marg residuals\n", idHost, idTarget, p.second[0], p.second[1]);
-                maxWrite--;
-                if(maxWrite==0) break;
-            }
+            // for(const std::pair<uint64_t,Eigen::Vector2i> &p : connectivity)
+            // {
+            //     int idHost = p.first>>32;
+            //     int idTarget = p.first & ((uint64_t)0xFFFFFFFF);
+            //     printf("OUT: Example Edge %d -> %d has %d active and %d marg residuals\n", idHost, idTarget, p.second[0], p.second[1]);
+            //     maxWrite--;
+            //     if(maxWrite==0) break;
+            // }
         }
 
 
@@ -100,11 +100,11 @@ public:
 
         virtual void publishCamPose(FrameShell* frame, CalibHessian* HCalib) override
         {
-            printf("OUT: Current Frame %d (time %f, internal ID %d). CameraToWorld:\n",
-                   frame->incoming_id,
-                   frame->timestamp,
-                   frame->id);
-            std::cout << frame->camToWorld.matrix3x4() << "\n";
+            // printf("OUT: Current Frame %d (time %f, internal ID %d). CameraToWorld:\n",
+            //        frame->incoming_id,
+            //        frame->timestamp,
+            //        frame->id);
+            // std::cout << frame->camToWorld.matrix3x4() << "\n";
         }
 
 
@@ -124,26 +124,26 @@ public:
 
         virtual void pushDepthImageFloat(MinimalImageF* image, FrameHessian* KF ) override
         {
-            printf("OUT: Predicted depth for KF %d (id %d, time %f, internal frame-ID %d). CameraToWorld:\n",
-                   KF->frameID,
-                   KF->shell->incoming_id,
-                   KF->shell->timestamp,
-                   KF->shell->id);
-            std::cout << KF->shell->camToWorld.matrix3x4() << "\n";
+            // printf("OUT: Predicted depth for KF %d (id %d, time %f, internal frame-ID %d). CameraToWorld:\n",
+            //        KF->frameID,
+            //        KF->shell->incoming_id,
+            //        KF->shell->timestamp,
+            //        KF->shell->id);
+            // std::cout << KF->shell->camToWorld.matrix3x4() << "\n";
 
-            int maxWrite = 5;
-            for(int y=0;y<image->h;y++)
-            {
-                for(int x=0;x<image->w;x++)
-                {
-                    if(image->at(x,y) <= 0) continue;
+            // int maxWrite = 5;
+            // for(int y=0;y<image->h;y++)
+            // {
+            //     for(int x=0;x<image->w;x++)
+            //     {
+            //         if(image->at(x,y) <= 0) continue;
 
-                    printf("OUT: Example Idepth at pixel (%d,%d): %f.\n", x,y,image->at(x,y));
-                    maxWrite--;
-                    if(maxWrite==0) break;
-                }
-                if(maxWrite==0) break;
-            }
+            //         printf("OUT: Example Idepth at pixel (%d,%d): %f.\n", x,y,image->at(x,y));
+            //         maxWrite--;
+            //         if(maxWrite==0) break;
+            //     }
+            //     if(maxWrite==0) break;
+            // }
         }
 
 

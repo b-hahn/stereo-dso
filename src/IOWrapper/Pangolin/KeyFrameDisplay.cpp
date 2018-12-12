@@ -242,10 +242,11 @@ bool KeyFrameDisplay::refreshPC(bool canRefresh, float scaledTH, float absTH, in
 			tmpVertexBuffer[vertexBufferNumPoints][0] = ((originalInputSparse[i].u+dx)*fxi + cxi) * depth;
 			tmpVertexBuffer[vertexBufferNumPoints][1] = ((originalInputSparse[i].v+dy)*fyi + cyi) * depth;
 			tmpVertexBuffer[vertexBufferNumPoints][2] = depth*(1 + 2*fxi * (rand()/(float)RAND_MAX-0.5f));
+			// std::cout << "-----> tmpVertexBuffer: " << tmpVertexBuffer[vertexBufferNumPoints][0] << " "
+			// 			<< tmpVertexBuffer[vertexBufferNumPoints][1] << " "
+			// 			<< tmpVertexBuffer[vertexBufferNumPoints][2] << std::endl;
 
-
-
-			if(my_displayMode==0)
+                        if(my_displayMode==0)
 			{
 				if(originalInputSparse[i].status==0)
 				{
