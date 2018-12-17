@@ -573,7 +573,7 @@ void FullSystem::stereoMatch( ImageAndExposure* image, ImageAndExposure* image_r
 
 
     int counter = 0;
-
+	std::cout << "stereoMatch()" << std::endl;
     makeNewTraces(fh, fh_right, 0);
 
     unsigned  char * idepthMapPtr = idepthMap.data;
@@ -595,6 +595,9 @@ void FullSystem::stereoMatch( ImageAndExposure* image, ImageAndExposure* image_r
 			phRight->v_stereo = phRight->v;
 			phRight->idepth_min_stereo = ph->idepth_min = 0;
 			phRight->idepth_max_stereo = ph->idepth_max = NAN;
+			// phRight->color_rgb[0] = 145;
+			// phRight->color_rgb[1] = 145;
+			// phRight->color_rgb[2] = 146;
 			ImmaturePointStatus  phTraceLeftStatus = phRight->traceStereo(fh, K, 0);
 
 			float u_stereo_delta = abs(ph->u_stereo - phRight->lastTraceUV(0));
@@ -688,6 +691,10 @@ void FullSystem::traceNewCoarseNonKey(FrameHessian *fh, FrameHessian *fh_right) 
 				phNonKey->v_stereo = phNonKey->v;
                 phNonKey->idepth_min_stereo = phNonKey->idepth_min;
                 phNonKey->idepth_max_stereo = phNonKey->idepth_max;
+				
+				// phNonKey->color_rgb[0] = 133;
+				// phNonKey->color_rgb[1] = 133;
+				// phNonKey->color_rgb[2] = 134;
 
                 // do static stereo match from left image to right
 				ImmaturePointStatus phNonKeyStereoStatus = phNonKey->traceStereo(fh_right, K, 1);
@@ -700,8 +707,11 @@ void FullSystem::traceNewCoarseNonKey(FrameHessian *fh, FrameHessian *fh_right) 
                     phNonKeyRight->v_stereo = phNonKeyRight->v;
                     phNonKeyRight->idepth_min_stereo = phNonKey->idepth_min;
                     phNonKeyRight->idepth_max_stereo = phNonKey->idepth_max;
+                    // phNonKeyRight->color_rgb[0] = 166;
+                    // phNonKeyRight->color_rgb[1] = 166;
+                    // phNonKeyRight->color_rgb[2] = 167;
 
-					// do static stereo match from right image to left
+                    // do static stereo match from right image to left
                     ImmaturePointStatus  phNonKeyRightStereoStatus = phNonKeyRight->traceStereo(fh, K, 0);
 
 					// change of u after two different stereo match
@@ -1081,7 +1091,7 @@ void FullSystem::flagPointsForRemoval()
 }
 
 
-void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* image_right, int id )
+void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* image_right, int id, std::shared_ptr<std::vector<uint8_t>> image_color )
 {
 
     if(isLost) return;
@@ -1107,6 +1117,9 @@ void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* imag
     fh->makeImages(image->image, &Hcalib);
 	fh_right->ab_exposure = image_right->exposure_time;
 	fh_right->makeImages(image_right->image,&Hcalib);
+
+	fh->image_rgb = image_color;
+	fh_right->image_rgb = image_color;
 	
 	if(!initialized)
 	{
@@ -1442,6 +1455,7 @@ void FullSystem::makeKeyFrame( FrameHessian* fh, FrameHessian* fh_right)
 
 
 	// =========================== add new Immature points & new residuals =========================
+	std::cout << "makeKeyFrame()" << std::endl;
     makeNewTraces(fh, fh_right, 0);
 
 
@@ -1534,6 +1548,8 @@ void FullSystem::initializeFromInitializer(FrameHessian* newFrame)
         pt->idepth_min_stereo = 0;
         pt->idepth_max_stereo = NAN;
 
+		// pt->color_rgb = {145, 145, 146};
+
         pt->traceStereo(firstFrameRight, K, 1);
 
         pt->idepth_min = pt->idepth_min_stereo;
@@ -1612,9 +1628,24 @@ void FullSystem::makeNewTraces(FrameHessian* newFrame, FrameHessian* newFrameRig
 	for(int x=patternPadding+1;x<wG[0]-patternPadding-2;x++)
 	{
 		int i = x+y*wG[0];
+		int pixel_location = x - (patternPadding+1) + (y - (patternPadding+1)) * wG[0];
 		if(selectionMap[i]==0) continue;
 
 		ImmaturePoint* impt = new ImmaturePoint(x,y,newFrame, selectionMap[i], &Hcalib);
+		if (newFrame->image_rgb) {
+			std::cout << "1" << std::endl;
+			impt->color_rgb[0] = newFrame->image_rgb->at(pixel_location);
+			std::cout << "2" << std::endl;
+			impt->color_rgb[1] = newFrame->image_rgb->at(pixel_location + 1);
+			std::cout << "3" << std::endl;
+			impt->color_rgb[2] = newFrame->image_rgb->at(pixel_location + 2);
+			std::cout << "color at point (" << std::to_string(x) << ", " << std::to_string(y) << " or rather "
+						<< std::to_string(pixel_location) << " or " << std::to_string(i) << ") is "
+						<< std::to_string(impt->color_rgb[0]) << ", " << std::to_string(impt->color_rgb[1]) << ", "
+						<< std::to_string(impt->color_rgb[2]) << std::endl;
+		} else {
+			std::cout << "No color information for point!" << std::endl;
+		}
 		if(!std::isfinite(impt->energyTH)) delete impt;
 		else newFrame->immaturePoints.push_back(impt);
 

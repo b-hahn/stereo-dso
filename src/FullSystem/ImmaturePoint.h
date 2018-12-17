@@ -73,6 +73,8 @@ public:
 
 	float my_type;
 
+	uint8_t color_rgb[3] = {0,0,0};
+
 	float idepth_min;
 	float idepth_max;
 	float idepth_min_stereo;  // idepth_min used to do static matching

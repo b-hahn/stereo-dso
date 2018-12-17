@@ -34,6 +34,7 @@
 #include "util/NumType.h"
 #include "FullSystem/Residuals.h"
 #include "util/ImageAndExposure.h"
+#include <memory>
 
 
 namespace dso
@@ -120,7 +121,7 @@ struct FrameHessian
 	Eigen::Vector3f* dIp[PYR_LEVELS];	 // coarse tracking / coarse initializer. NAN in [0] only.
 	float* absSquaredGrad[PYR_LEVELS];  // only used for pixel select (histograms etc.). no NAN.
 
-
+	std::shared_ptr<std::vector<uint8_t>> image_rgb;
 
 
 
