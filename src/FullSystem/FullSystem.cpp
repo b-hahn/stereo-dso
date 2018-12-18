@@ -1615,45 +1615,54 @@ void FullSystem::initializeFromInitializer(FrameHessian* newFrame)
 
 void FullSystem::makeNewTraces(FrameHessian* newFrame, FrameHessian* newFrameRight, float* gtDepth)
 {
-	pixelSelector->allowFast = true;
-	//int numPointsTotal = makePixelStatus(newFrame->dI, selectionMap, wG[0], hG[0], setting_desiredDensity);
-	int numPointsTotal = pixelSelector->makeMaps(newFrame, selectionMap,setting_desiredImmatureDensity);
+    pixelSelector->allowFast = true;
+    // int numPointsTotal = makePixelStatus(newFrame->dI, selectionMap, wG[0], hG[0], setting_desiredDensity);
+    int numPointsTotal = pixelSelector->makeMaps(newFrame, selectionMap, setting_desiredImmatureDensity);
 
-	newFrame->pointHessians.reserve(numPointsTotal*1.2f);
-	//fh->pointHessiansInactive.reserve(numPointsTotal*1.2f);
-	newFrame->pointHessiansMarginalized.reserve(numPointsTotal*1.2f);
-	newFrame->pointHessiansOut.reserve(numPointsTotal*1.2f);
-
-	for(int y=patternPadding+1;y<hG[0]-patternPadding-2;y++)
-	for(int x=patternPadding+1;x<wG[0]-patternPadding-2;x++)
+    newFrame->pointHessians.reserve(numPointsTotal * 1.2f);
+    // fh->pointHessiansInactive.reserve(numPointsTotal*1.2f);
+    newFrame->pointHessiansMarginalized.reserve(numPointsTotal * 1.2f);
+    newFrame->pointHessiansOut.reserve(numPointsTotal * 1.2f);
+	std::string cyan = "\033[0;36;1m";
+	// std::string bold = "\033[0;1m";
+	std::string reset = "\033[0m";
 	{
-		int i = x+y*wG[0];
-		int pixel_location = x - (patternPadding+1) + (y - (patternPadding+1)) * wG[0];
-		if(selectionMap[i]==0) continue;
+		std::cout << cyan << "BEGIN mapMutex Lock in makeNewTraces()" << reset << std::endl;
+		boost::unique_lock<boost::mutex> color_lock(colorImageMutex);
+		std::cout << cyan << "CURRENTLY IN mapMutex Lock in makeNewTraces()" << reset << std::endl;
+		for (int y = patternPadding + 1; y < hG[0] - patternPadding - 2; y++) {
+			for (int x = patternPadding + 1; x < wG[0] - patternPadding - 2; x++) {
+				int i = x + y * wG[0];
+				int pixel_location = x - (patternPadding + 1) + (y - (patternPadding + 1)) * wG[0];
+				if (selectionMap[i] == 0)
+					continue;
 
-		ImmaturePoint* impt = new ImmaturePoint(x,y,newFrame, selectionMap[i], &Hcalib);
-		if (newFrame->image_rgb) {
-			std::cout << "1" << std::endl;
-			impt->color_rgb[0] = newFrame->image_rgb->at(pixel_location);
-			std::cout << "2" << std::endl;
-			impt->color_rgb[1] = newFrame->image_rgb->at(pixel_location + 1);
-			std::cout << "3" << std::endl;
-			impt->color_rgb[2] = newFrame->image_rgb->at(pixel_location + 2);
-			std::cout << "color at point (" << std::to_string(x) << ", " << std::to_string(y) << " or rather "
-						<< std::to_string(pixel_location) << " or " << std::to_string(i) << ") is "
-						<< std::to_string(impt->color_rgb[0]) << ", " << std::to_string(impt->color_rgb[1]) << ", "
-						<< std::to_string(impt->color_rgb[2]) << std::endl;
-		} else {
-			std::cout << "No color information for point!" << std::endl;
+				ImmaturePoint* impt = new ImmaturePoint(x, y, newFrame, selectionMap[i], &Hcalib);
+
+				if (newFrame->image_rgb) {
+					std::cout << "1" << std::endl;
+					impt->color_rgb[0] = newFrame->image_rgb->at(pixel_location);
+					std::cout << "2" << std::endl;
+					impt->color_rgb[1] = newFrame->image_rgb->at(pixel_location + 1);
+					std::cout << "3" << std::endl;
+					impt->color_rgb[2] = newFrame->image_rgb->at(pixel_location + 2);
+					std::cout << "color at point (" << std::to_string(x) << ", " << std::to_string(y) << " or rather "
+							<< std::to_string(pixel_location) << " or " << std::to_string(i) << ") is "
+							<< std::to_string(impt->color_rgb[0]) << ", " << std::to_string(impt->color_rgb[1]) << ", "
+							<< std::to_string(impt->color_rgb[2]) << std::endl;
+				} else {
+					std::cout << "No color information for point!" << std::endl;
+				}
+				if (!std::isfinite(impt->energyTH))
+					delete impt;
+				else
+					newFrame->immaturePoints.push_back(impt);
+			}
 		}
-		if(!std::isfinite(impt->energyTH)) delete impt;
-		else newFrame->immaturePoints.push_back(impt);
-
+		std::cout << cyan << "END mapMutex Lock in makeNewTraces()" << reset << std::endl;
 	}
-	printf("MADE %d IMMATURE POINTS!\n", (int)newFrame->immaturePoints.size());
-
+    printf("MADE %d IMMATURE POINTS!\n", (int)newFrame->immaturePoints.size());
 }
-
 
 void FullSystem::setPrecalcValues()
 {
