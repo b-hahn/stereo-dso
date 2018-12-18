@@ -296,7 +296,8 @@ private:
 	// mutex for camToWorl's in shells (these are always in a good configuration).
 	boost::mutex shellPoseMutex;
 
-
+	// mutex for handling color images
+	boost::mutex colorImageMutex;
 
 /*
  * tracking always uses the newest KF as reference.

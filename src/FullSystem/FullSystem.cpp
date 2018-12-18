@@ -1118,8 +1118,11 @@ void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* imag
 	fh_right->ab_exposure = image_right->exposure_time;
 	fh_right->makeImages(image_right->image,&Hcalib);
 
-	fh->image_rgb = image_color;
-	fh_right->image_rgb = image_color;
+	{
+		boost::unique_lock<boost::mutex> color_lock(colorImageMutex);
+		fh->image_rgb = image_color;
+		fh_right->image_rgb = image_color;
+	}
 	
 	if(!initialized)
 	{
