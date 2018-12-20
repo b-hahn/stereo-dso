@@ -29,6 +29,7 @@
 #include "util/NumType.h"
 #include "util/globalCalib.h"
 #include "vector"
+#include <array>
  
 #include <iostream>
 #include <fstream>

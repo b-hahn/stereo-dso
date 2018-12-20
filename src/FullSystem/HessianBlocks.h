@@ -35,6 +35,7 @@
 #include "FullSystem/Residuals.h"
 #include "util/ImageAndExposure.h"
 #include <memory>
+#include <array>
 
 
 namespace dso
@@ -412,7 +413,7 @@ struct PointHessian
 	float color[MAX_RES_PER_POINT];			// colors in host frame
 	float weights[MAX_RES_PER_POINT];		// host-weights for respective residuals.
 
-
+	std::array<uint8_t, 3> color_rgb = {{0,0,255}};
 
 	float u,v;
 	int idx;

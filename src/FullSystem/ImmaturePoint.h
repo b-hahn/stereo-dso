@@ -73,7 +73,7 @@ public:
 
 	float my_type;
 
-	uint8_t color_rgb[3] = {0,0,0};
+	std::array<uint8_t, 3> color_rgb ={{255,0,0}};
 
 	float idepth_min;
 	float idepth_max;
