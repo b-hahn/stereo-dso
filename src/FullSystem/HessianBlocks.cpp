@@ -63,11 +63,11 @@ PointHessian::PointHessian(const ImmaturePoint* const rawPoint, CalibHessian* Hc
 	// TODO: not a sensible check! See if it's == 0,0,0, right?
 	// if (rawPoint->color_rgb != std::array<uint8_t, 3>{{0,0,0}}) {
 	color_rgb = rawPoint->color_rgb;
-	std::cout << "Setting pointHessian color from ImmaturePoint: ";
-	for (auto& c : color_rgb) {
-		std::cout << std::to_string(c) << ", ";
-	}
-	std::cout << std::endl;
+	// std::cout << "Setting pointHessian color from ImmaturePoint: ";
+	// for (auto& c : color_rgb) {
+	// 	std::cout << std::to_string(c) << ", ";
+	// }
+	// std::cout << std::endl;
 	// }
 
 
@@ -112,7 +112,7 @@ void FrameHessian::setStateZero(const Vec10 &state_zero)
 
 	nullspaces_affine.setZero();
 	nullspaces_affine.topLeftCorner<2,1>()  = Vec2(1,0);
-	assert(ab_exposure > 0);
+	// assert(ab_exposure > 0);
 	nullspaces_affine.topRightCorner<2,1>() = Vec2(0, expf(aff_g2l_0().a)*ab_exposure);
 };
 

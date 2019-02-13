@@ -953,6 +953,7 @@ void FullSystem::activatePointsMT()
 		if(newpoint != 0 && newpoint != (PointHessian*)((long)(-1)))
 		{
 			newpoint->host->immaturePoints[ph->idxInImmaturePoints]=0;
+			// std::cout << "pushing back new pointHessian with id " << std::to_string(newpoint->idx) << std::endl;
 			newpoint->host->pointHessians.push_back(newpoint);
 			ef->insertPoint(newpoint);
 			for(PointFrameResidual* r : newpoint->residuals)
@@ -1458,7 +1459,7 @@ void FullSystem::makeKeyFrame( FrameHessian* fh, FrameHessian* fh_right)
 
 
 	// =========================== add new Immature points & new residuals =========================
-	std::cout << "makeKeyFrame()" << std::endl;
+	// std::cout << "makeKeyFrame()" << std::endl;
     makeNewTraces(fh, fh_right, 0);
 
 
@@ -1626,29 +1627,17 @@ void FullSystem::makeNewTraces(FrameHessian* newFrame, FrameHessian* newFrameRig
     // fh->pointHessiansInactive.reserve(numPointsTotal*1.2f);
     newFrame->pointHessiansMarginalized.reserve(numPointsTotal * 1.2f);
     newFrame->pointHessiansOut.reserve(numPointsTotal * 1.2f);
-	std::string cyan = "\033[0;36;1m";
-	std::string reset = "\033[0m"; 
-
 	{
-		std::cout << cyan << "BEGIN mapMutex Lock in makeNewTraces()" << reset << std::endl;
 		boost::unique_lock<boost::mutex> color_lock(colorImageMutex);
-		cv::Mat debug_img;
-		bool image_saved = false;
-		debug_img = cv::Mat::zeros(hG[0], wG[0], CV_8UC3);
-		// debug_img = cv::Mat::zeros(hG[0] - 2*(patternPadding + 1), wG[0] - 2*(patternPadding + 1), CV_8UC3);
-		std::cout << cyan << "CURRENTLY IN mapMutex Lock in makeNewTraces()" << reset << std::endl;
 		for (int y = patternPadding + 1; y < hG[0] - patternPadding - 2; y++) {
 			for (int x = patternPadding + 1; x < wG[0] - patternPadding - 2; x++) {
 				int i = x + y * wG[0];
-				int pixel_location = i; // x + (y - (patternPadding + 1)) * wG[0];
-				// int pixel_location = x - (patternPadding + 1) + (y - (patternPadding + 1)) * wG[0];
+				int pixel_location = i;
 				if (selectionMap[i] == 0)
 					continue;
 
 				ImmaturePoint* impt = new ImmaturePoint(x, y, newFrame, selectionMap[i], &Hcalib);
-
 				if (newFrame->image_rgb) {
-					// convert from OpenCV BGR to RGB
 					impt->color_rgb[0] = newFrame->image_rgb->at(3 * pixel_location);
 					impt->color_rgb[1] = newFrame->image_rgb->at(3 * pixel_location + 1);
 					impt->color_rgb[2] = newFrame->image_rgb->at(3 * pixel_location + 2);
@@ -1656,7 +1645,6 @@ void FullSystem::makeNewTraces(FrameHessian* newFrame, FrameHessian* newFrameRig
 					// 		<< std::to_string(pixel_location) << " or " << std::to_string(i) << ") is "
 					// 		<< std::to_string(impt->color_rgb[0]) << ", " << std::to_string(impt->color_rgb[1]) << ", "
 					// 		<< std::to_string(impt->color_rgb[2]) << std::endl;
-					debug_img.at<cv::Vec3b>(y, x) = cv::Vec3b(impt->color_rgb[2], impt->color_rgb[1], impt->color_rgb[0]);
 				} else {
 					std::cout << "No color information for point!" << std::endl;
 				}
@@ -1666,13 +1654,6 @@ void FullSystem::makeNewTraces(FrameHessian* newFrame, FrameHessian* newFrameRig
 					newFrame->immaturePoints.push_back(impt);
 			}
 		}
-		if (newFrame->frameID > 2 && image_saved == false) {
-			std::cout << "Saving!" << std::endl;
-			cv::cvtColor(debug_img, debug_img, cv::COLOR_BGR2RGB);
-			cv::imwrite("frame" + std::to_string(newFrame->frameID) + ".png", debug_img);
-			image_saved = true;
-		}
-		std::cout << cyan << "END mapMutex Lock in makeNewTraces()  (frameID: " << std::to_string(newFrame->frameID) << ")" << reset << std::endl;
 	}
     printf("MADE %d IMMATURE POINTS!\n", (int)newFrame->immaturePoints.size());
 }
