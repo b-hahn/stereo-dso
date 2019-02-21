@@ -123,6 +123,7 @@ struct FrameHessian
 	float* absSquaredGrad[PYR_LEVELS];  // only used for pixel select (histograms etc.). no NAN.
 
 	std::shared_ptr<std::vector<uint8_t>> image_rgb;
+	std::shared_ptr<std::vector<uint8_t>> image_semantics;
 
 
 
@@ -414,6 +415,7 @@ struct PointHessian
 	float weights[MAX_RES_PER_POINT];		// host-weights for respective residuals.
 
 	std::array<uint8_t, 3> color_rgb = {{0,0,255}};
+	std::array<uint8_t, 3> semantics_rgb = {{0,0,112}};
 
 	float u,v;
 	int idx;

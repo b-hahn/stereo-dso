@@ -532,7 +532,7 @@ int main( int argc, char** argv )
 
             if(MODE_SLAM)
             {
-                if(!skipFrame) fullSystem->addActiveFrame(img_left, img_right, i, nullptr);
+                if(!skipFrame) fullSystem->addActiveFrame(img_left, img_right, i, nullptr, nullptr);
             }
 
             if(MODE_STEREOMATCH)

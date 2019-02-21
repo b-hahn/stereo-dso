@@ -1092,7 +1092,7 @@ void FullSystem::flagPointsForRemoval()
 }
 
 
-void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* image_right, int id, std::shared_ptr<std::vector<uint8_t>> image_color )
+void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* image_right, int id, std::shared_ptr<std::vector<uint8_t>> image_color, std::shared_ptr<std::vector<uint8_t>> image_semantics)
 {
 
     if(isLost) return;
@@ -1122,7 +1122,12 @@ void FullSystem::addActiveFrame( ImageAndExposure* image, ImageAndExposure* imag
 	{
 		boost::unique_lock<boost::mutex> color_lock(colorImageMutex);
 		fh->image_rgb = image_color;
+		// TODO: do we we need color images left and right?
 		fh_right->image_rgb = image_color;
+
+		// we only need semantics for left image since we simply assign that value to points
+		fh->image_semantics = image_semantics;
+		fh_right->image_semantics = image_semantics;
 	}
 	
 	if(!initialized)
@@ -1647,6 +1652,17 @@ void FullSystem::makeNewTraces(FrameHessian* newFrame, FrameHessian* newFrameRig
 					// 		<< std::to_string(impt->color_rgb[2]) << std::endl;
 				} else {
 					std::cout << "No color information for point!" << std::endl;
+				}
+				if (newFrame->image_semantics) {
+					impt->semantics_rgb[0] = newFrame->image_semantics->at(3 * pixel_location);
+					impt->semantics_rgb[1] = newFrame->image_semantics->at(3 * pixel_location + 1);
+					impt->semantics_rgb[2] = newFrame->image_semantics->at(3 * pixel_location + 2);
+                                        // std::cout << "color at point (" << std::to_string(x) << ", " << std::to_string(y) << " or rather "
+					// 		<< std::to_string(pixel_location) << " or " << std::to_string(i) << ") is "
+					// 		<< std::to_string(impt->color_rgb[0]) << ", " << std::to_string(impt->color_rgb[1]) << ", "
+					// 		<< std::to_string(impt->color_rgb[2]) << std::endl;
+				} else {
+					std::cout << "No semantic information for point!" << std::endl;
 				}
 				if (!std::isfinite(impt->energyTH))
 					delete impt;

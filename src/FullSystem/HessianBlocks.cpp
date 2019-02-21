@@ -63,6 +63,9 @@ PointHessian::PointHessian(const ImmaturePoint* const rawPoint, CalibHessian* Hc
 	// TODO: not a sensible check! See if it's == 0,0,0, right?
 	// if (rawPoint->color_rgb != std::array<uint8_t, 3>{{0,0,0}}) {
 	color_rgb = rawPoint->color_rgb;
+	// TODO: comment back in once it works
+	semantics_rgb = rawPoint->semantics_rgb;
+
 	// std::cout << "Setting pointHessian color from ImmaturePoint: ";
 	// for (auto& c : color_rgb) {
 	// 	std::cout << std::to_string(c) << ", ";

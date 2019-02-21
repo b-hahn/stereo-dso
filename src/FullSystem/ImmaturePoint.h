@@ -74,6 +74,7 @@ public:
 	float my_type;
 
 	std::array<uint8_t, 3> color_rgb ={{255,0,0}};
+	std::array<uint8_t, 3> semantics_rgb ={{0,127,0}};
 
 	float idepth_min;
 	float idepth_max;
